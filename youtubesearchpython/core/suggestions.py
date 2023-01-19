@@ -4,9 +4,13 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import httpx
+import scrapfly_config
 
 from youtubesearchpython.core.constants import ResultMode, userAgent
 from youtubesearchpython.core.requests import RequestCore
+from scrapfly import ScrapflyClient, ScrapeApiResponse, ScrapeConfig
+
+
 
 
 class SuggestionsCore(RequestCore):
@@ -43,6 +47,7 @@ class SuggestionsCore(RequestCore):
 
     def __init__(self, language: str = 'en', region: str = 'US', timeout: int = None):
         super().__init__()
+        self.scrapfly = ScrapflyClient(key=scrapfly_config.SCRAPFLY_KEY)
         self.language = language
         self.region = region
         self.timeout = timeout
@@ -89,13 +94,21 @@ class SuggestionsCore(RequestCore):
 
     def __parseSource(self) -> None:
         try:
+            print(self.response)
             self.responseSource = json.loads(self.response[self.response.index('(') + 1: self.response.index(')')])
         except:
             raise Exception('ERROR: Could not parse YouTube response.')
 
     def __makeRequest(self) -> None:
-        request = self.syncGetRequest()
-        self.response = request.text
+        self.response = self.scrapfly.scrape(
+        ScrapeConfig(
+                url=self.url,
+                # we can set proxy country to appear as if we're connecting from US
+                country="US",
+                # for harder to scrape targets we can enable :anti-scraping protection bypass" if needed:
+                # asp=True,
+            )
+        ).content
 
     async def __makeAsyncRequest(self) -> None:
         request = await self.asyncGetRequest()

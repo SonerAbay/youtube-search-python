@@ -13,3 +13,5 @@ test.py
 test2.py
 *.json
 *.html
+
+youtubesearchpython/core/scrapfly_config.py
